@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.api.mapper.ProductInfoMapper">
+    
+    <resultMap type="ProductInfo" id="ProductInfoResult">
+        <result property="productId"    column="product_id"    />
+        <result property="productCode"    column="product_code"    />
+        <result property="productName"    column="product_name"    />
+        <result property="productType"    column="product_type"    />
+        <result property="categoryId"    column="category_id"    />
+        <result property="classificationId"    column="classification_id"    />
+        <result property="model"    column="model"    />
+        <result property="unit"    column="unit"    />
+        <result property="purchasePrice"    column="purchase_price"    />
+        <result property="leadTime"    column="lead_time"    />
+        <result property="weight"    column="weight"    />
+        <result property="volume"    column="volume"    />
+        <result property="length"    column="length"    />
+        <result property="width"    column="width"    />
+        <result property="height"    column="height"    />
+        <result property="standardBoxQty"    column="standard_box_qty"    />
+        <result property="sales30days"    column="sales_30days"    />
+        <result property="stock"    column="stock"    />
+        <result property="description"    column="description"    />
+        <result property="purchaseRemark"    column="purchase_remark"    />
+        <result property="platform1688Url"    column="platform_1688_url"    />
+        <result property="qualityType"    column="quality_type"    />
+        <result property="salesChannels"    column="sales_channels"    />
+        <result property="isActive"    column="is_active"    />
+        <result property="categoryName"    column="category_name"    />
+        <result property="classificationName"    column="classification_name"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <resultMap id="ProductInfoProductClassificationResult" type="ProductInfo" extends="ProductInfoResult">
+        <collection property="productClassificationList" ofType="ProductClassification" column="product_id" select="selectProductClassificationList" />
+    </resultMap>
+
+    <resultMap id="ProductInfoProductImagesResult" type="ProductInfo" extends="ProductInfoResult">
+        <collection property="productImagesList" ofType="ProductImages" column="product_id" select="selectProductImagesList" />
+    </resultMap>
+
+    <resultMap id="ProductInfoWithPrimaryImageResult" type="ProductInfo" extends="ProductInfoResult">
+        <association property="primaryImage" javaType="ProductImages" column="product_id" select="selectPrimaryImage" />
+    </resultMap>
+
+    <resultMap type="ProductClassification" id="ProductClassificationResult">
+        <result property="classificationId"    column="classification_id"    />
+        <result property="classificationName"    column="classification_name"    />
+        <result property="subtypeName"    column="subtype_name"    />
+        <result property="description"    column="description"    />
+        <result property="sortOrder"    column="sort_order"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <resultMap type="ProductImages" id="ProductImagesResult">
+        <result property="imageId"    column="image_id"    />
+        <result property="productId"    column="product_id"    />
+        <result property="imagePath"    column="image_path"    />
+        <result property="imageType"    column="image_type"    />
+        <result property="sortOrder"    column="sort_order"    />
+        <result property="isPrimary"    column="is_primary"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectProductInfoVo">
+        select product_id, product_code, product_name, product_type, category_id, classification_id, model, unit, purchase_price, lead_time, weight, volume, length, width, height, standard_box_qty, sales_30days, description, purchase_remark, platform_1688_url, quality_type, sales_channels, is_active, create_by, create_time, update_by, update_time, remark from product_info
+    </sql>
+
+    <select id="selectProductInfoList" parameterType="ProductInfo" resultMap="ProductInfoResult">
+        <include refid="selectProductInfoVo"/>
+        <where>  
+            <if test="productCode != null  and productCode != ''"> and product_code = #{productCode}</if>
+            <if test="productName != null  and productName != ''"> and product_name like concat('%', #{productName}, '%')</if>
+            <if test="productType != null "> and product_type = #{productType}</if>
+            <if test="categoryId != null "> and category_id = #{categoryId}</if>
+            <if test="classificationId != null "> and classification_id = #{classificationId}</if>
+            <if test="model != null  and model != ''"> and model like concat('%', #{model}, '%')</if>
+            <if test="unit != null "> and unit = #{unit}</if>
+            <if test="purchasePrice != null "> and purchase_price = #{purchasePrice}</if>
+            <if test="leadTime != null "> and lead_time = #{leadTime}</if>
+            <if test="weight != null "> and weight = #{weight}</if>
+            <if test="volume != null "> and volume = #{volume}</if>
+            <if test="length != null "> and length = #{length}</if>
+            <if test="width != null "> and width = #{width}</if>
+            <if test="height != null "> and height = #{height}</if>
+            <if test="standardBoxQty != null "> and standard_box_qty = #{standardBoxQty}</if>
+            <if test="sales30days != null "> and sales_30days = #{sales30days}</if>
+            <if test="description != null  and description != ''"> and description = #{description}</if>
+            <if test="purchaseRemark != null  and purchaseRemark != ''"> and purchase_remark = #{purchaseRemark}</if>
+            <if test="platform1688Url != null  and platform1688Url != ''"> and platform_1688_url = #{platform1688Url}</if>
+            <if test="qualityType != null "> and quality_type = #{qualityType}</if>
+            <if test="salesChannels != null  and salesChannels != ''"> and sales_channels = #{salesChannels}</if>
+            <if test="isActive != null  and isActive != ''"> and is_active = #{isActive}</if>
+        </where>
+    </select>
+    
+    <select id="selectProductInfoByProductId" parameterType="Long" resultMap="ProductInfoProductClassificationResult">
+        select product_id, product_code, product_name, product_type, category_id, classification_id, model, unit, purchase_price, lead_time, weight, volume, length, width, height, standard_box_qty, sales_30days, description, purchase_remark, platform_1688_url, quality_type, sales_channels, is_active, create_by, create_time, update_by, update_time, remark
+        from product_info
+        where product_id = #{productId}
+    </select>
+
+    <select id="selectProductInfoWithImages" parameterType="Long" resultMap="ProductInfoProductImagesResult">
+        select p.product_id, p.product_code, p.product_name, p.product_type, p.category_id, p.classification_id, p.model, p.unit, p.purchase_price, p.lead_time, p.weight, p.volume, p.length, p.width, p.height, p.standard_box_qty, p.sales_30days, 
+               COALESCE(s.quantity, 0) as stock, p.description, p.purchase_remark, p.platform_1688_url, p.quality_type, p.sales_channels, p.is_active, p.create_by, p.create_time, p.update_by, p.update_time, p.remark
+        from product_info p
+        left join inventory_stock s on p.product_id = s.product_id
+        where p.product_id = #{productId}
+    </select>
+
+    <select id="selectProductImagesList" parameterType="Long" resultMap="ProductImagesResult">
+        select image_id, product_id, image_path, image_type, sort_order, is_primary, create_time
+        from product_images
+        where product_id = #{productId}
+        order by sort_order asc, is_primary desc, create_time desc
+    </select>
+
+    <select id="selectPrimaryImage" parameterType="Long" resultMap="ProductImagesResult">
+        select image_id, product_id, image_path, image_type, sort_order, is_primary, create_time
+        from product_images
+        where product_id = #{productId} and is_primary = '1'
+        limit 1
+    </select>
+
+    <select id="selectProductInfoListWithPrimaryImage" parameterType="ProductInfo" resultMap="ProductInfoWithPrimaryImageResult">
+        select p.product_id, p.product_code, p.product_name, p.product_type, p.category_id, p.classification_id, p.model, p.unit, p.purchase_price, p.lead_time, p.weight, p.volume, p.length, p.width, p.height, p.standard_box_qty, p.sales_30days, 
+               COALESCE(s.quantity, 0) as stock, p.description, p.purchase_remark, p.platform_1688_url, p.quality_type, p.sales_channels, p.is_active, p.create_by, p.create_time, p.update_by, p.update_time, p.remark
+        from product_info p
+        left join inventory_stock s on p.product_id = s.product_id
+        <where>  
+            <if test="productCode != null  and productCode != ''"> and p.product_code = #{productCode}</if>
+            <if test="productName != null  and productName != ''"> and p.product_name like concat('%', #{productName}, '%')</if>
+            <if test="productType != null "> and p.product_type = #{productType}</if>
+            <if test="categoryId != null "> and p.category_id = #{categoryId}</if>
+            <if test="classificationId != null "> and p.classification_id = #{classificationId}</if>
+            <if test="model != null  and model != ''"> and p.model like concat('%', #{model}, '%')</if>
+            <if test="unit != null "> and p.unit = #{unit}</if>
+            <if test="purchasePrice != null "> and p.purchase_price = #{purchasePrice}</if>
+            <if test="leadTime != null "> and p.lead_time = #{leadTime}</if>
+            <if test="weight != null "> and p.weight = #{weight}</if>
+            <if test="volume != null "> and p.volume = #{volume}</if>
+            <if test="length != null "> and p.length = #{length}</if>
+            <if test="width != null "> and p.width = #{width}</if>
+            <if test="height != null "> and p.height = #{height}</if>
+            <if test="standardBoxQty != null "> and p.standard_box_qty = #{standardBoxQty}</if>
+            <if test="sales30days != null "> and p.sales_30days = #{sales30days}</if>
+            <if test="description != null  and description != ''"> and p.description = #{description}</if>
+            <if test="purchaseRemark != null  and purchaseRemark != ''"> and p.purchase_remark = #{purchaseRemark}</if>
+            <if test="platform1688Url != null  and platform1688Url != ''"> and p.platform_1688_url = #{platform1688Url}</if>
+            <if test="qualityType != null "> and p.quality_type = #{qualityType}</if>
+            <if test="salesChannels != null  and salesChannels != ''"> and p.sales_channels = #{salesChannels}</if>
+            <if test="isActive != null  and isActive != ''"> and p.is_active = #{isActive}</if>
+        </where>
+    </select>
+
+    <select id="selectProductClassificationList" resultMap="ProductClassificationResult">
+        select classification_id, classification_name, subtype_name, description, sort_order, status, create_by, create_time, update_by, update_time, remark
+        from product_classification
+        where classification_id = #{classification_id}
+    </select>
+
+    <insert id="insertProductInfo" parameterType="ProductInfo" useGeneratedKeys="true" keyProperty="productId">
+        insert into product_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="productCode != null and productCode != ''">product_code,</if>
+            <if test="productName != null and productName != ''">product_name,</if>
+            <if test="productType != null">product_type,</if>
+            <if test="categoryId != null">category_id,</if>
+            <if test="classificationId != null">classification_id,</if>
+            <if test="model != null">model,</if>
+            <if test="unit != null">unit,</if>
+            <if test="purchasePrice != null">purchase_price,</if>
+            <if test="leadTime != null">lead_time,</if>
+            <if test="weight != null">weight,</if>
+            <if test="volume != null">volume,</if>
+            <if test="length != null">length,</if>
+            <if test="width != null">width,</if>
+            <if test="height != null">height,</if>
+            <if test="standardBoxQty != null">standard_box_qty,</if>
+            <if test="sales30days != null">sales_30days,</if>
+            <if test="description != null">description,</if>
+            <if test="purchaseRemark != null">purchase_remark,</if>
+            <if test="platform1688Url != null">platform_1688_url,</if>
+            <if test="qualityType != null">quality_type,</if>
+            <if test="salesChannels != null">sales_channels,</if>
+            <if test="isActive != null">is_active,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="productCode != null and productCode != ''">#{productCode},</if>
+            <if test="productName != null and productName != ''">#{productName},</if>
+            <if test="productType != null">#{productType},</if>
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="classificationId != null">#{classificationId},</if>
+            <if test="model != null">#{model},</if>
+            <if test="unit != null">#{unit},</if>
+            <if test="purchasePrice != null">#{purchasePrice},</if>
+            <if test="leadTime != null">#{leadTime},</if>
+            <if test="weight != null">#{weight},</if>
+            <if test="volume != null">#{volume},</if>
+            <if test="length != null">#{length},</if>
+            <if test="width != null">#{width},</if>
+            <if test="height != null">#{height},</if>
+            <if test="standardBoxQty != null">#{standardBoxQty},</if>
+            <if test="sales30days != null">#{sales30days},</if>
+            <if test="description != null">#{description},</if>
+            <if test="purchaseRemark != null">#{purchaseRemark},</if>
+            <if test="platform1688Url != null">#{platform1688Url},</if>
+            <if test="qualityType != null">#{qualityType},</if>
+            <if test="salesChannels != null">#{salesChannels},</if>
+            <if test="isActive != null">#{isActive},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateProductInfo" parameterType="ProductInfo">
+        update product_info
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="productCode != null and productCode != ''">product_code = #{productCode},</if>
+            <if test="productName != null and productName != ''">product_name = #{productName},</if>
+            <if test="productType != null">product_type = #{productType},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="classificationId != null">classification_id = #{classificationId},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="purchasePrice != null">purchase_price = #{purchasePrice},</if>
+            <if test="leadTime != null">lead_time = #{leadTime},</if>
+            <if test="weight != null">weight = #{weight},</if>
+            <if test="volume != null">volume = #{volume},</if>
+            <if test="length != null">length = #{length},</if>
+            <if test="width != null">width = #{width},</if>
+            <if test="height != null">height = #{height},</if>
+            <if test="standardBoxQty != null">standard_box_qty = #{standardBoxQty},</if>
+            <if test="sales30days != null">sales_30days = #{sales30days},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="purchaseRemark != null">purchase_remark = #{purchaseRemark},</if>
+            <if test="platform1688Url != null">platform_1688_url = #{platform1688Url},</if>
+            <if test="qualityType != null">quality_type = #{qualityType},</if>
+            <if test="salesChannels != null">sales_channels = #{salesChannels},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where product_id = #{productId}
+    </update>
+
+    <delete id="deleteProductInfoByProductId" parameterType="Long">
+        delete from product_info where product_id = #{productId}
+    </delete>
+
+    <delete id="deleteProductInfoByProductIds" parameterType="String">
+        delete from product_info where product_id in 
+        <foreach item="productId" collection="array" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </delete>
+    
+    <delete id="deleteProductClassificationByClassificationIds" parameterType="String">
+        delete from product_classification where classification_id in 
+        <foreach item="classificationId" collection="array" open="(" separator="," close=")">
+            #{classificationId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteProductClassificationByClassificationId" parameterType="Long">
+        delete from product_classification where classification_id = #{classificationId}
+    </delete>
+
+    <insert id="batchProductClassification">
+        insert into product_classification( classification_id, classification_name, subtype_name, description, sort_order, status, create_by, create_time, update_by, update_time, remark) values
+        <foreach item="item" index="index" collection="list" separator=",">
+            ( #{item.classificationId}, #{item.classificationName}, #{item.subtypeName}, #{item.description}, #{item.sortOrder}, #{item.status}, #{item.createBy}, #{item.createTime}, #{item.updateBy}, #{item.updateTime}, #{item.remark})
+        </foreach>
+    </insert>
+
+    <!-- 获取指定产品类型、类目、分类的最大SKU序号 -->
+    <select id="getMaxSkuSequence" resultType="Integer">
+        SELECT MAX(CAST(SUBSTRING(product_code, -4) AS UNSIGNED)) as max_sequence
+        FROM product_info
+        WHERE product_type = #{productType}
+          AND category_id = #{categoryId}
+          AND classification_id = #{classificationId}
+          AND product_code REGEXP '^[A-Z]-[A-Z0-9]{2}-[A-Z]{2}-[0-9]{4}$'
+    </select>
+
+    <!-- 根据SKU编码统计产品数量（排除指定产品ID） -->
+    <select id="countByProductCode" resultType="Integer">
+        SELECT COUNT(1)
+        FROM product_info
+        WHERE product_code = #{productCode}
+        <if test="excludeProductId != null">
+            AND product_id != #{excludeProductId}
+        </if>
+    </select>
+</mapper>

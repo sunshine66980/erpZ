@@ -1,0 +1,68 @@
+# 生产环境配置
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  # 数据源配置
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    druid:
+      master:
+        url: jdbc:mysql://${DB_HOST:localhost}:3306/erp_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+      initialSize: 5
+      minIdle: 10
+      maxActive: 20
+      maxWait: 60000
+      connectTimeout: 30000
+      socketTimeout: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      maxEvictableIdleTimeMillis: 900000
+      validationQuery: SELECT 1 FROM DUAL
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      webStatFilter:
+        enabled: true
+      statViewServlet:
+        enabled: true
+        allow:
+        url-pattern: /druid/*
+        login-username: ${DRUID_USER}
+        login-password: ${DRUID_PASSWORD}
+
+  # Redis配置
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: 0
+      timeout: 10s
+      lettuce:
+        pool:
+          min-idle: 0
+          max-idle: 8
+          max-active: 8
+          max-wait: -1ms
+
+# 日志配置
+logging:
+  level:
+    com.ruoyi: info
+    org.springframework: warn
+
+# 项目配置
+ruoyi:
+  profile: /app/uploadPath
+
+# token配置
+token:
+  header: Authorization
+  secret: ${TOKEN_SECRET}
+  expireTime: ${TOKEN_EXPIRE:30}
+

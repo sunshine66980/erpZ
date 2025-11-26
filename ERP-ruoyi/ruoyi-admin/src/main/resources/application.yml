@@ -1,0 +1,5 @@
+# 主配置文件 - 环境切换入口
+spring:
+  profiles:
+    # 默认激活开发环境
+    active: dev

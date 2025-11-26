@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.api.mapper.InventoryStockMapper">
+    
+    <resultMap type="InventoryStock" id="InventoryStockResult">
+        <result property="stockId"    column="stock_id"    />
+        <result property="productId"    column="product_id"    />
+        <result property="warehouseId"    column="warehouse_id"    />
+        <result property="batchNo"    column="batch_no"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="availableQuantity"    column="available_quantity"    />
+        <result property="lockedQuantity"    column="locked_quantity"    />
+        <result property="unitCost"    column="unit_cost"    />
+        <result property="qualityStatus"    column="quality_status"    />
+        <result property="productionDate"    column="production_date"    />
+        <result property="expiryDate"    column="expiry_date"    />
+        <result property="inDate"    column="in_date"    />
+        <result property="supplierId"    column="supplier_id"    />
+        <result property="lastTransactionTime"    column="last_transaction_time"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="updateBy"    column="update_by"    />
+    </resultMap>
+
+    <sql id="selectInventoryStockVo">
+        select stock_id, product_id, warehouse_id, batch_no, quantity, available_quantity, locked_quantity, unit_cost, quality_status, production_date, expiry_date, in_date, supplier_id, last_transaction_time, create_time, create_by, update_time, update_by from inventory_stock
+    </sql>
+
+    <select id="selectInventoryStockList" parameterType="InventoryStock" resultMap="InventoryStockResult">
+        <include refid="selectInventoryStockVo"/>
+        <where>  
+            <if test="productId != null "> and product_id = #{productId}</if>
+            <if test="warehouseId != null "> and warehouse_id = #{warehouseId}</if>
+            <if test="batchNo != null  and batchNo != ''"> and batch_no like concat('%', #{batchNo}, '%')</if>
+            <if test="quantity != null "> and quantity = #{quantity}</if>
+            <if test="availableQuantity != null "> and available_quantity = #{availableQuantity}</if>
+            <if test="lockedQuantity != null "> and locked_quantity = #{lockedQuantity}</if>
+            <if test="unitCost != null "> and unit_cost = #{unitCost}</if>
+            <if test="qualityStatus != null "> and quality_status = #{qualityStatus}</if>
+            <if test="productionDate != null "> and production_date = #{productionDate}</if>
+            <if test="expiryDate != null "> and expiry_date = #{expiryDate}</if>
+            <if test="inDate != null "> and in_date = #{inDate}</if>
+            <if test="supplierId != null "> and supplier_id = #{supplierId}</if>
+            <if test="lastTransactionTime != null "> and last_transaction_time = #{lastTransactionTime}</if>
+        </where>
+    </select>
+    
+    <select id="selectInventoryStockByStockId" parameterType="Long" resultMap="InventoryStockResult">
+        <include refid="selectInventoryStockVo"/>
+        where stock_id = #{stockId}
+    </select>
+
+    <select id="selectInventoryStockByProductId" parameterType="Long" resultMap="InventoryStockResult">
+        <include refid="selectInventoryStockVo"/>
+        where product_id = #{productId}
+        limit 1
+    </select>
+
+    <select id="selectInventoryStockByProductIdAndWarehouseId" resultMap="InventoryStockResult">
+        <include refid="selectInventoryStockVo"/>
+        where product_id = #{productId} and warehouse_id = #{warehouseId}
+        limit 1
+    </select>
+        
+    <insert id="insertInventoryStock" parameterType="InventoryStock" useGeneratedKeys="true" keyProperty="stockId">
+        insert into inventory_stock
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="productId != null">product_id,</if>
+            <if test="warehouseId != null">warehouse_id,</if>
+            <if test="batchNo != null and batchNo != ''">batch_no,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="availableQuantity != null">available_quantity,</if>
+            <if test="lockedQuantity != null">locked_quantity,</if>
+            <if test="unitCost != null">unit_cost,</if>
+            <if test="qualityStatus != null">quality_status,</if>
+            <if test="productionDate != null">production_date,</if>
+            <if test="expiryDate != null">expiry_date,</if>
+            <if test="inDate != null">in_date,</if>
+            <if test="supplierId != null">supplier_id,</if>
+            <if test="lastTransactionTime != null">last_transaction_time,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="updateBy != null">update_by,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="productId != null">#{productId},</if>
+            <if test="warehouseId != null">#{warehouseId},</if>
+            <if test="batchNo != null and batchNo != ''">#{batchNo},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="availableQuantity != null">#{availableQuantity},</if>
+            <if test="lockedQuantity != null">#{lockedQuantity},</if>
+            <if test="unitCost != null">#{unitCost},</if>
+            <if test="qualityStatus != null">#{qualityStatus},</if>
+            <if test="productionDate != null">#{productionDate},</if>
+            <if test="expiryDate != null">#{expiryDate},</if>
+            <if test="inDate != null">#{inDate},</if>
+            <if test="supplierId != null">#{supplierId},</if>
+            <if test="lastTransactionTime != null">#{lastTransactionTime},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+         </trim>
+    </insert>
+
+    <update id="updateInventoryStock" parameterType="InventoryStock">
+        update inventory_stock
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="productId != null">product_id = #{productId},</if>
+            <if test="warehouseId != null">warehouse_id = #{warehouseId},</if>
+            <if test="batchNo != null and batchNo != ''">batch_no = #{batchNo},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="availableQuantity != null">available_quantity = #{availableQuantity},</if>
+            <if test="lockedQuantity != null">locked_quantity = #{lockedQuantity},</if>
+            <if test="unitCost != null">unit_cost = #{unitCost},</if>
+            <if test="qualityStatus != null">quality_status = #{qualityStatus},</if>
+            <if test="productionDate != null">production_date = #{productionDate},</if>
+            <if test="expiryDate != null">expiry_date = #{expiryDate},</if>
+            <if test="inDate != null">in_date = #{inDate},</if>
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="lastTransactionTime != null">last_transaction_time = #{lastTransactionTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+        </trim>
+        where stock_id = #{stockId}
+    </update>
+
+    <delete id="deleteInventoryStockByStockId" parameterType="Long">
+        delete from inventory_stock where stock_id = #{stockId}
+    </delete>
+
+    <delete id="deleteInventoryStockByStockIds" parameterType="String">
+        delete from inventory_stock where stock_id in 
+        <foreach item="stockId" collection="array" open="(" separator="," close=")">
+            #{stockId}
+        </foreach>
+    </delete>
+
+    <update id="updateProductStock">
+        INSERT INTO inventory_stock (product_id, warehouse_id, quantity, available_quantity, create_time, create_by, update_time, update_by)
+        VALUES (#{productId}, 1, #{quantity}, #{quantity}, NOW(), 'system', NOW(), 'system')
+        ON DUPLICATE KEY UPDATE 
+            quantity = #{quantity}, 
+            available_quantity = #{quantity},
+            last_transaction_time = NOW(),
+            update_time = NOW(),
+            update_by = 'system'
+    </update>
+</mapper>

@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # Redis服务
+  redis:
+    image: redis:7-alpine
+    container_name: jw-redis
+    restart: unless-stopped
+    ports:
+      - "9736:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/etc/redis/redis.conf
+    command: sh -c "mkdir -p /var/log/redis && redis-server /etc/redis/redis.conf"
+    networks:
+      - jw-network
+    sysctls:
+      - net.core.somaxconn=1024
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "J5+1aU@E", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Java后端服务
+  jw-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jw-backend
+    restart: unless-stopped
+    ports:
+      - "48080:48080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_USERNAME=${DB_USERNAME:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-root123456}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-J5+1aU@E}
+      - DRUID_USER=${DRUID_USER:-ruoyi}
+      - DRUID_PASSWORD=${DRUID_PASSWORD:-123456}
+      - TOKEN_SECRET=${TOKEN_SECRET:-abcdefghijklmnopqrstuvwxyz}
+      - TOKEN_EXPIRE=${TOKEN_EXPIRE:-30}
+      - WEIGO_BASE_URL=${WEIGO_BASE_URL:-https://www.szwego.com}
+      - WEIGO_COMMODITY_URL=${WEIGO_COMMODITY_URL:-https://www.szwego.com/commodity/openapi/v3/commodity/open}
+      - WEIGO_ORDER_URL=${WEIGO_ORDER_URL:-https://www.szwego.com/newOrder/openapi/v2/order/open}
+      - WEIGO_USERNAME=${WEIGO_USERNAME}
+      - WEIGO_PASSWORD=${WEIGO_PASSWORD}
+      - WEIGO_CONNECT_TIMEOUT=${WEIGO_CONNECT_TIMEOUT:-5000}
+      - WEIGO_READ_TIMEOUT=${WEIGO_READ_TIMEOUT:-10000}
+      - JAVA_OPTS=-Xmx1024m -Xms512m
+    volumes:
+      - ./backend/logs:/app/logs
+      - ./uploadPath:/app/uploadPath
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - jw-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:48080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx前端服务
+  jw-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jw-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend/logs:/var/log/nginx
+      - ./frontend/dist:/usr/share/nginx/html
+      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /home/certs:/etc/nginx/ssl:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - jw-backend
+    networks:
+      - jw-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# 网络配置
+networks:
+  jw-network:
+    driver: bridge
+    # 如果需要固定IP段，取消下面的注释
+    # ipam:
+    #   config:
+    #     - subnet: 172.20.0.0/16
+
+# 数据卷
+volumes:
+  redis_data:
+    driver: local
+    name: jw_redis_data

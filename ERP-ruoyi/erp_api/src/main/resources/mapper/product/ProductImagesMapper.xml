@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.api.mapper.ProductImagesMapper">
+    
+    <resultMap type="ProductImages" id="ProductImagesResult">
+        <result property="imageId"    column="image_id"    />
+        <result property="productId"    column="product_id"    />
+        <result property="imagePath"    column="image_path"    />
+        <result property="imageType"    column="image_type"    />
+        <result property="sortOrder"    column="sort_order"    />
+        <result property="isPrimary"    column="is_primary"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectProductImagesVo">
+        select image_id, product_id, image_path, image_type, sort_order, is_primary, create_time from product_images
+    </sql>
+
+    <select id="selectProductImagesList" parameterType="ProductImages" resultMap="ProductImagesResult">
+        <include refid="selectProductImagesVo"/>
+        <where>  
+            <if test="productId != null "> and product_id = #{productId}</if>
+            <if test="imagePath != null  and imagePath != ''"> and image_path = #{imagePath}</if>
+            <if test="imageType != null "> and image_type = #{imageType}</if>
+            <if test="sortOrder != null "> and sort_order = #{sortOrder}</if>
+            <if test="isPrimary != null  and isPrimary != ''"> and is_primary = #{isPrimary}</if>
+        </where>
+    </select>
+    
+    <select id="selectProductImagesByImageId" parameterType="Long" resultMap="ProductImagesResult">
+        <include refid="selectProductImagesVo"/>
+        where image_id = #{imageId}
+    </select>
+
+    <insert id="insertProductImages" parameterType="ProductImages" useGeneratedKeys="true" keyProperty="imageId">
+        insert into product_images
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="productId != null">product_id,</if>
+            <if test="imagePath != null and imagePath != ''">image_path,</if>
+            <if test="imageType != null">image_type,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="isPrimary != null">is_primary,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="productId != null">#{productId},</if>
+            <if test="imagePath != null and imagePath != ''">#{imagePath},</if>
+            <if test="imageType != null">#{imageType},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="isPrimary != null">#{isPrimary},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateProductImages" parameterType="ProductImages">
+        update product_images
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="productId != null">product_id = #{productId},</if>
+            <if test="imagePath != null and imagePath != ''">image_path = #{imagePath},</if>
+            <if test="imageType != null">image_type = #{imageType},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="isPrimary != null">is_primary = #{isPrimary},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where image_id = #{imageId}
+    </update>
+
+    <delete id="deleteProductImagesByImageId" parameterType="Long">
+        delete from product_images where image_id = #{imageId}
+    </delete>
+
+    <delete id="deleteProductImagesByImageIds" parameterType="String">
+        delete from product_images where image_id in 
+        <foreach item="imageId" collection="array" open="(" separator="," close=")">
+            #{imageId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteProductImagesByProductId" parameterType="Long">
+        delete from product_images where product_id = #{productId}
+    </delete>
+
+    <insert id="batchInsertProductImages" parameterType="java.util.List">
+        insert into product_images(product_id, image_path, image_type, sort_order, is_primary, create_time) values
+        <foreach item="item" index="index" collection="list" separator=",">
+            ( #{item.productId}, #{item.imagePath}, #{item.imageType}, #{item.sortOrder}, #{item.isPrimary}, #{item.createTime})
+        </foreach>
+    </insert>
+</mapper>
