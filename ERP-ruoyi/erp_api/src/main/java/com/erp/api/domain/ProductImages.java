@@ -98,12 +98,27 @@ public class ProductImages extends BaseEntity
         return isPrimary;
     }
 
+    /** 3D模型路径 */
+    @Excel(name = "3D模型路径")
+    private String modelPath;
+
+    public void setModelPath(String modelPath) 
+    {
+        this.modelPath = modelPath;
+    }
+
+    public String getModelPath() 
+    {
+        return modelPath;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("imageId", getImageId())
             .append("productId", getProductId())
             .append("imagePath", getImagePath())
+            .append("modelPath", getModelPath())
             .append("imageType", getImageType())
             .append("sortOrder", getSortOrder())
             .append("isPrimary", getIsPrimary())

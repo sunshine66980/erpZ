@@ -101,4 +101,40 @@ public class ProductImagesController extends BaseController
     {
         return toAjax(productImagesService.deleteProductImagesByImageIds(imageIds));
     }
+
+    /**
+     * 生成3D模型
+     */
+    @PostMapping("/generate3DModel")
+    public AjaxResult generate3DModel(@RequestParam("file") MultipartFile file)
+    {
+        try {
+            // 1. 保存上传的图片文件
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String imageName = System.currentTimeMillis() + extension;
+            String imagePath = "/upload/images/" + imageName;
+            File dest = new File(System.getProperty("user.dir") + "/upload" + imagePath);
+            dest.getParentFile().mkdirs();
+            file.transferTo(dest);
+
+            // 2. 调用3D模型生成API
+            // 这里需要替换为实际的3D模型生成API调用
+            // 例如：使用Stable Diffusion 3D、Meshroom或其他3D生成服务
+            String modelName = System.currentTimeMillis() + ".glb";
+            String modelPath = "/upload/models/" + modelName;
+            File modelDest = new File(System.getProperty("user.dir") + "/upload" + modelPath);
+            modelDest.getParentFile().mkdirs();
+
+            // 模拟3D模型生成过程
+            // 在实际应用中，这里应该调用外部API或本地3D生成库
+            Thread.sleep(3000); // 模拟生成时间
+
+            // 3. 返回生成的3D模型路径
+            return success(modelPath);
+        } catch (Exception e) {
+            logger.error("生成3D模型失败", e);
+            return error("生成3D模型失败：" + e.getMessage());
+        }
+    }
 }

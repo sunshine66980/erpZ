@@ -82,6 +82,7 @@
       <el-table-column label="${comment}" align="center" prop="imageId" />
       <el-table-column label="${comment}" align="center" prop="productId" />
       <el-table-column label="图片路径" align="center" prop="imagePath" />
+      <el-table-column label="3D模型路径" align="center" prop="modelPath" />
       <el-table-column label="图片类型，参考字典表sys_dict_data.dict_value, dict_type=erp_image_type" align="center" prop="imageType" />
       <el-table-column label="排序顺序" align="center" prop="sortOrder" />
       <el-table-column label="是否主图" align="center" prop="isPrimary" />
@@ -120,7 +121,13 @@
           <el-input v-model="form.productId" placeholder="请输入${comment}" />
         </el-form-item>
         <el-form-item label="图片路径" prop="imagePath">
-          <el-input v-model="form.imagePath" type="textarea" placeholder="请输入内容" />
+          <ImageUpload v-model="form.imagePath" :limit="1" @success="onImageUploadSuccess" />
+        </el-form-item>
+        <el-form-item label="3D模型路径" prop="modelPath">
+          <el-input v-model="form.modelPath" type="textarea" placeholder="请输入3D模型路径" readonly />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="generate3DModel" :loading="generating">生成3D模型</el-button>
         </el-form-item>
         <el-form-item label="排序顺序" prop="sortOrder">
           <el-input v-model="form.sortOrder" placeholder="请输入排序顺序" />
@@ -138,7 +145,8 @@
 </template>
 
 <script>
-import { listImages, getImages, delImages, addImages, updateImages } from "@/api/product/images"
+import { listImages, getImages, delImages, addImages, updateImages, generate3DModel } from "@/api/product/images"
+import ImageUpload from "@/components/ImageUpload"
 
 export default {
   name: "Images",
@@ -182,13 +190,44 @@ export default {
         imagePath: [
           { required: true, message: "图片路径不能为空", trigger: "blur" }
         ],
-      }
+      },
+      // 3D模型生成状态
+      generating: false,
+      // 上传的图片文件
+      uploadedFile: null
     }
   },
   created() {
     this.getList()
   },
   methods: {
+    /** 图片上传成功处理 */
+    onImageUploadSuccess(file) {
+      this.uploadedFile = file
+    },
+
+    /** 生成3D模型 */
+    generate3DModel() {
+      if (!this.uploadedFile) {
+        this.$modal.msgWarning("请先上传图片")
+        return
+      }
+
+      this.generating = true
+      // 调用后端API生成3D模型
+      generate3DModel(this.uploadedFile).then(response => {
+        if (response.code === 200) {
+          this.form.modelPath = response.data
+          this.$modal.msgSuccess("3D模型生成成功")
+        } else {
+          this.$modal.msgError(response.msg)
+        }
+      }).catch(error => {
+        this.$modal.msgError("3D模型生成失败：" + error.message)
+      }).finally(() => {
+        this.generating = false
+      })
+    },
     /** 查询产品图片列表 */
     getList() {
       this.loading = true
@@ -209,6 +248,7 @@ export default {
         imageId: null,
         productId: null,
         imagePath: null,
+        modelPath: null,
         imageType: null,
         sortOrder: null,
         isPrimary: null,
@@ -252,6 +292,9 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          // 生成3D模型
+          this.generate3DModel()
+          
           if (this.form.imageId != null) {
             updateImages(this.form).then(response => {
               this.$modal.msgSuccess("修改成功")

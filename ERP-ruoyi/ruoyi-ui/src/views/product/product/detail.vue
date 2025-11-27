@@ -1,5 +1,14 @@
 <template>
   <div class="product-detail-container">
+    <!-- VR虚拟试戴组件 -->
+    <VirtualTryOn
+      v-if="virtualTryOnVisible"
+      :visible="virtualTryOnVisible"
+      :product-id="productId"
+      :product-name="productInfo.productName"
+      @close="virtualTryOnVisible = false"
+    />
+
     <!-- 返回按钮 -->
     <div class="back-section">
       <el-button icon="el-icon-arrow-left" @click="goBack">返回产品列表</el-button>
@@ -12,6 +21,7 @@
         <div class="header-actions">
           <el-button type="primary" icon="el-icon-edit" @click="handleEdit">编辑产品</el-button>
           <el-button type="success" icon="el-icon-shopping-cart-2" @click="handlePurchase">采购产品</el-button>
+          <el-button type="warning" icon="el-icon-camera" @click="handleVirtualTryOn">VR虚拟试戴</el-button>
         </div>
       </div>
       
@@ -189,9 +199,13 @@
 
 <script>
 import { getProduct } from "@/api/product/product"
+import VirtualTryOn from "@/components/VirtualTryOn"
 
 export default {
   name: "ProductDetail",
+  components: {
+    VirtualTryOn
+  },
   data() {
     return {
       productId: null,
@@ -199,7 +213,8 @@ export default {
       productInfo: {},
       activeTab: 'specs',
       currentImageIndex: 0,
-      productImages: []
+      productImages: [],
+      virtualTryOnVisible: false
     }
   },
   computed: {
@@ -216,6 +231,10 @@ export default {
     }
   },
   methods: {
+    /** VR虚拟试戴 */
+    handleVirtualTryOn() {
+      this.virtualTryOnVisible = true
+    },
     /** 获取产品详情 */
     getProductDetail() {
       this.loading = true
