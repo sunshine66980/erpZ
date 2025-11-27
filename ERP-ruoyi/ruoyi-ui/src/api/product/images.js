@@ -42,3 +42,17 @@ export function delImages(imageId) {
     method: 'delete'
   })
 }
+
+// 生成3D模型
+export function generate3DModel(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/product/images/generate3DModel',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
