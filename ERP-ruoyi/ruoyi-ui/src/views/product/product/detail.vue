@@ -6,6 +6,8 @@
       :visible="virtualTryOnVisible"
       :product-id="productId"
       :product-name="productInfo.productName"
+      :model-path="getModelPath()"
+      :product-type="getProductType()"
       @close="virtualTryOnVisible = false"
     />
 
@@ -422,7 +424,29 @@ export default {
     
     /** 格式化价格 */
     formatPrice(price) {
-      return price ? `¥${price.toFixed(2)}` : '-'
+      return price ? `¥${price.toFixed(2)}` : '-' 
+    },
+    
+    /** 获取3D模型路径 */
+    getModelPath() {
+      // 这里需要根据产品ID或其他标识获取3D模型路径
+      // 暂时返回一个示例模型路径，实际应该从后端获取
+      return '/upload/models/example.glb'
+    },
+    
+    /** 获取产品类型 */
+    getProductType() {
+      // 根据产品信息判断产品类型
+      const category = this.productInfo.categoryName || ''
+      if (category.includes('首饰') || category.includes('珠宝')) {
+        return 'jewelry'
+      } else if (category.includes('手表') || category.includes('腕表')) {
+        return 'watch'
+      } else if (category.includes('眼镜') || category.includes('太阳镜')) {
+        return 'glasses'
+      } else {
+        return 'jewelry' // 默认是首饰
+      }
     }
   }
 }

@@ -8,10 +8,11 @@
       <div ref="modelElement" class="model-wrapper"></div>
     </div>
     <div class="controls-container">
-      <el-button type="primary" @click="startCamera">启动摄像头</el-button>
-      <el-button type="success" @click="loadModel">加载3D模型</el-button>
+      <el-button type="primary" @click="startCamera" :disabled="isCameraActive">启动摄像头</el-button>
+      <el-button type="success" @click="loadModel" :disabled="!modelPath || isModelLoaded">加载3D模型</el-button>
       <el-button type="warning" @click="toggleFullscreen">全屏模式</el-button>
-      <el-button type="danger" @click="stopCamera">停止摄像头</el-button>
+      <el-button type="danger" @click="stopCamera" :disabled="!isCameraActive">停止摄像头</el-button>
+      <el-button type="info" @click="resetModelPosition">重置模型位置</el-button>
     </div>
   </div>
 </template>
@@ -19,6 +20,7 @@
 <script>
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 export default {
   name: 'VirtualTryOn',
@@ -26,6 +28,11 @@ export default {
     modelPath: {
       type: String,
       default: ''
+    },
+    productType: {
+      type: String,
+      default: 'jewelry', // jewelry, watch, etc.
+      validator: (value) => ['jewelry', 'watch', 'glasses'].includes(value)
     }
   },
   data() {
@@ -37,7 +44,9 @@ export default {
       controls: null,
       model: null,
       isCameraActive: false,
-      isModelLoaded: false
+      isModelLoaded: false,
+      modelScale: 1,
+      modelPosition: { x: 0, y: 0, z: 0 }
     }
   },
   mounted() {
@@ -69,14 +78,21 @@ export default {
       this.controls = new OrbitControls(this.camera, this.renderer.domElement)
       this.controls.enableDamping = true
       this.controls.dampingFactor = 0.05
+      this.controls.enablePan = false
+      this.controls.minDistance = 0.5
+      this.controls.maxDistance = 10
       
       // 添加光照
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
       this.scene.add(ambientLight)
       
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
-      directionalLight.position.set(1, 1, 1)
-      this.scene.add(directionalLight)
+      const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8)
+      directionalLight1.position.set(1, 1, 1)
+      this.scene.add(directionalLight1)
+      
+      const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5)
+      directionalLight2.position.set(-1, 1, -1)
+      this.scene.add(directionalLight2)
       
       // 渲染循环
       const animate = () => {
@@ -87,8 +103,8 @@ export default {
         }
         
         if (this.model) {
-          // 可以在这里添加模型动画
-          this.model.rotation.y += 0.005
+          // 轻微旋转模型以展示细节
+          this.model.rotation.y += 0.002
         }
         
         this.renderer.render(this.scene, this.camera)
@@ -164,19 +180,100 @@ export default {
         return
       }
       
-      // 这里可以使用GLTFLoader或OBJLoader来加载3D模型
-      // 由于是示例，我将创建一个简单的几何体作为演示
-      const geometry = new THREE.SphereGeometry(1, 32, 32)
-      const material = new THREE.MeshPhongMaterial({
-        color: 0xff0000,
-        shininess: 100
+      // 使用GLTFLoader加载3D模型
+      const loader = new GLTFLoader()
+      
+      // 显示加载状态
+      this.$modal.loading('正在加载3D模型，请稍候...')
+      
+      loader.load(
+        this.modelPath,
+        (gltf) => {
+          // 移除旧模型
+          if (this.model) {
+            this.scene.remove(this.model)
+            this.disposeModel(this.model)
+          }
+          
+          // 获取模型
+          this.model = gltf.scene
+          
+          // 根据产品类型设置默认位置和缩放
+          this.setDefaultModelPosition()
+          
+          // 添加到场景
+          this.scene.add(this.model)
+          
+          this.isModelLoaded = true
+          this.$modal.closeLoading()
+          this.$modal.msgSuccess('3D模型加载成功')
+        },
+        (xhr) => {
+          console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+        },
+        (error) => {
+          console.error('模型加载失败:', error)
+          this.$modal.closeLoading()
+          this.$modal.msgError('3D模型加载失败，请检查模型文件')
+        }
+      )
+    },
+    
+    /**
+     * 设置默认模型位置和缩放
+     */
+    setDefaultModelPosition() {
+      if (!this.model) return
+      
+      // 根据产品类型设置不同的默认位置和缩放
+      switch (this.productType) {
+        case 'jewelry':
+          // 首饰默认位置（脸部前方）
+          this.modelScale = 0.5
+          this.modelPosition = { x: 0, y: -0.5, z: 2 }
+          break
+        case 'watch':
+          // 手表默认位置（手部前方）
+          this.modelScale = 0.8
+          this.modelPosition = { x: 0, y: 0, z: 2 }
+          break
+        case 'glasses':
+          // 眼镜默认位置（脸部前方）
+          this.modelScale = 1.0
+          this.modelPosition = { x: 0, y: -0.2, z: 1.5 }
+          break
+        default:
+          this.modelScale = 1.0
+          this.modelPosition = { x: 0, y: 0, z: 2 }
+      }
+      
+      // 应用位置和缩放
+      this.model.scale.set(this.modelScale, this.modelScale, this.modelScale)
+      this.model.position.set(this.modelPosition.x, this.modelPosition.y, this.modelPosition.z)
+    },
+    
+    /**
+     * 重置模型位置
+     */
+    resetModelPosition() {
+      this.setDefaultModelPosition()
+      this.$modal.msgSuccess('模型位置已重置')
+    },
+    
+    /**
+     * 释放模型资源
+     */
+    disposeModel(model) {
+      model.traverse((object) => {
+        if (object.geometry) object.geometry.dispose()
+        if (object.material) {
+          if (Array.isArray(object.material)) {
+            object.material.forEach(material => material.dispose())
+          } else {
+            object.material.dispose()
+          }
+        }
       })
-      
-      this.model = new THREE.Mesh(geometry, material)
-      this.scene.add(this.model)
-      
-      this.isModelLoaded = true
-      this.$modal.msgSuccess('3D模型加载成功')
     },
     
     /**
@@ -208,8 +305,7 @@ export default {
       
       if (this.model) {
         this.scene.remove(this.model)
-        this.model.geometry.dispose()
-        this.model.material.dispose()
+        this.disposeModel(this.model)
       }
     }
   }
@@ -244,7 +340,7 @@ video {
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .model-wrapper {
@@ -260,16 +356,27 @@ video {
   display: flex;
   gap: 10px;
   z-index: 100;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .controls-container .el-button {
   background-color: rgba(0, 0, 0, 0.7);
   border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
+  transition: all 0.3s ease;
 }
 
 .controls-container .el-button:hover {
   background-color: rgba(0, 0, 0, 0.9);
   border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.controls-container .el-button:disabled {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
 }
 </style>
