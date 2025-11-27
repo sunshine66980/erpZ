@@ -1,5 +1,8 @@
 <template>
-  <div class="virtual-try-on-container">
+  <div class="virtual-try-on-container" v-if="visible">
+    <div class="close-button" @click="handleClose">
+      <i class="el-icon-close"></i>
+    </div>
     <div class="camera-container">
       <video ref="videoElement" autoplay playsinline></video>
       <canvas ref="canvasElement" style="display: none;"></canvas>
@@ -8,10 +11,14 @@
       <div ref="modelElement" class="model-wrapper"></div>
     </div>
     <div class="controls-container">
-      <el-button type="primary" @click="startCamera">启动摄像头</el-button>
-      <el-button type="success" @click="loadModel">加载3D模型</el-button>
+      <el-button type="primary" @click="startCamera" :disabled="isCameraActive">启动摄像头</el-button>
+      <el-button type="success" @click="loadModel" :disabled="isModelLoaded || !modelPath">加载3D模型</el-button>
       <el-button type="warning" @click="toggleFullscreen">全屏模式</el-button>
-      <el-button type="danger" @click="stopCamera">停止摄像头</el-button>
+      <el-button type="danger" @click="stopCamera" :disabled="!isCameraActive">停止摄像头</el-button>
+    </div>
+    <div class="product-info">
+      <h3>{{ productName || '产品虚拟试戴' }}</h3>
+      <p v-if="productId">产品ID: {{ productId }}</p>
     </div>
   </div>
 </template>
@@ -19,10 +26,23 @@
 <script>
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 export default {
   name: 'VirtualTryOn',
   props: {
+    visible: {
+      type: Boolean,
+      default: false
+    },
+    productId: {
+      type: [String, Number],
+      default: ''
+    },
+    productName: {
+      type: String,
+      default: ''
+    },
     modelPath: {
       type: String,
       default: ''
@@ -41,7 +61,19 @@ export default {
     }
   },
   mounted() {
-    this.initThreeJS()
+    if (this.visible) {
+      this.initThreeJS()
+    }
+  },
+  watch: {
+    visible(newVal) {
+      if (newVal) {
+        this.initThreeJS()
+      } else {
+        this.stopCamera()
+        this.disposeThreeJS()
+      }
+    }
   },
   beforeDestroy() {
     this.stopCamera()
@@ -160,23 +192,54 @@ export default {
      */
     loadModel() {
       if (!this.modelPath) {
-        this.$modal.msgWarning('请先设置3D模型路径')
+        this.$modal.msgWarning('请先生成3D模型')
         return
       }
       
-      // 这里可以使用GLTFLoader或OBJLoader来加载3D模型
-      // 由于是示例，我将创建一个简单的几何体作为演示
-      const geometry = new THREE.SphereGeometry(1, 32, 32)
-      const material = new THREE.MeshPhongMaterial({
-        color: 0xff0000,
-        shininess: 100
-      })
+      // 使用GLTFLoader加载3D模型
+      const loader = new GLTFLoader()
       
-      this.model = new THREE.Mesh(geometry, material)
-      this.scene.add(this.model)
-      
-      this.isModelLoaded = true
-      this.$modal.msgSuccess('3D模型加载成功')
+      // 加载模型
+      loader.load(
+        this.modelPath,
+        (gltf) => {
+          // 清除之前的模型
+          if (this.model) {
+            this.scene.remove(this.model)
+            this.model.geometry.dispose()
+            this.model.material.dispose()
+          }
+          
+          // 获取模型
+          this.model = gltf.scene
+          
+          // 调整模型位置和大小
+          this.model.position.set(0, 0, 2) // 调整模型位置，使其看起来像戴在手上
+          this.model.scale.set(1, 1, 1) // 调整模型大小
+          
+          // 添加模型到场景
+          this.scene.add(this.model)
+          
+          this.isModelLoaded = true
+          this.$modal.msgSuccess('3D模型加载成功，可以开始虚拟试戴')
+        },
+        (xhr) => {
+          // 加载进度
+          console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+        },
+        (error) => {
+          // 加载错误
+          console.error('3D模型加载失败:', error)
+          this.$modal.msgError('3D模型加载失败，请检查模型文件是否正确')
+        }
+      )
+    },
+    
+    /**
+     * 关闭组件
+     */
+    handleClose() {
+      this.$emit('close')
     },
     
     /**
@@ -218,12 +281,66 @@ export default {
 
 <style scoped>
 .virtual-try-on-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: #000;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background-color: #000;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.close-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10000;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.close-button i {
+  color: white;
+  font-size: 20px;
+}
+
+.product-info {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  color: white;
+  text-align: left;
+  z-index: 10000;
+}
+
+.product-info h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.product-info p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.8;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .camera-container {

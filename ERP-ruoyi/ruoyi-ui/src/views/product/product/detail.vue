@@ -6,6 +6,7 @@
       :visible="virtualTryOnVisible"
       :product-id="productId"
       :product-name="productInfo.productName"
+      :model-path="currentModelPath"
       @close="virtualTryOnVisible = false"
     />
 
@@ -21,7 +22,7 @@
         <div class="header-actions">
           <el-button type="primary" icon="el-icon-edit" @click="handleEdit">编辑产品</el-button>
           <el-button type="success" icon="el-icon-shopping-cart-2" @click="handlePurchase">采购产品</el-button>
-          <el-button type="warning" icon="el-icon-camera" @click="handleVirtualTryOn">VR虚拟试戴</el-button>
+          <el-button type="warning" icon="el-icon-camera" @click="handleVirtualTryOn" :disabled="!currentModelPath">VR虚拟试戴</el-button>
         </div>
       </div>
       
@@ -55,6 +56,20 @@
                   <i class="el-icon-crown"></i>
                 </div>
               </div>
+            </div>
+            <!-- 图片上传和3D模型生成 -->
+            <div class="image-upload-section">
+              <el-form-item label="上传图片">
+                <ImageUpload v-model="uploadedImagePath" :limit="1" @success="onImageUploadSuccess" />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="generate3DModel" :loading="generating3DModel" :disabled="!uploadedFile">
+                  {{ generating3DModel ? '生成中...' : '生成3D模型' }}
+                </el-button>
+              </el-form-item>
+              <el-form-item label="3D模型路径" v-if="currentModelPath">
+                <el-input v-model="currentModelPath" readonly placeholder="3D模型路径" />
+              </el-form-item>
             </div>
           </div>
         </div>
@@ -199,12 +214,15 @@
 
 <script>
 import { getProduct } from "@/api/product/product"
+import { generate3DModel } from "@/api/product/images"
 import VirtualTryOn from "@/components/VirtualTryOn"
+import ImageUpload from "@/components/ImageUpload"
 
 export default {
   name: "ProductDetail",
   components: {
-    VirtualTryOn
+    VirtualTryOn,
+    ImageUpload
   },
   data() {
     return {
@@ -214,7 +232,11 @@ export default {
       activeTab: 'specs',
       currentImageIndex: 0,
       productImages: [],
-      virtualTryOnVisible: false
+      virtualTryOnVisible: false,
+      uploadedImagePath: '',
+      uploadedFile: null,
+      currentModelPath: '',
+      generating3DModel: false
     }
   },
   computed: {
@@ -234,6 +256,35 @@ export default {
     /** VR虚拟试戴 */
     handleVirtualTryOn() {
       this.virtualTryOnVisible = true
+    },
+
+    /** 图片上传成功处理 */
+    onImageUploadSuccess(file) {
+      this.uploadedFile = file
+      this.uploadedImagePath = file.response.data
+    },
+
+    /** 生成3D模型 */
+    generate3DModel() {
+      if (!this.uploadedFile) {
+        this.$modal.msgWarning("请先上传图片")
+        return
+      }
+
+      this.generating3DModel = true
+      // 调用后端API生成3D模型
+      generate3DModel(this.uploadedFile).then(response => {
+        if (response.code === 200) {
+          this.currentModelPath = response.data
+          this.$modal.msgSuccess("3D模型生成成功")
+        } else {
+          this.$modal.msgError(response.msg)
+        }
+      }).catch(error => {
+        this.$modal.msgError("3D模型生成失败：" + error.message)
+      }).finally(() => {
+        this.generating3DModel = false
+      })
     },
     /** 获取产品详情 */
     getProductDetail() {
@@ -462,88 +513,112 @@ export default {
         flex: 0 0 400px;
         
         .product-images {
-          .main-image {
-            margin-bottom: 12px;
-            border: 1px solid #e4e7ed;
-            border-radius: 8px;
-            overflow: hidden;
-            
-            .main-product-image {
-              width: 100%;
-              height: 300px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              background: #f5f7fa;
-              
-              .image-error {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                color: #909399;
-                
-                i {
-                  font-size: 48px;
-                  margin-bottom: 8px;
-                }
-              }
-            }
-          }
-          
-          .thumbnail-list {
-            display: flex;
-            gap: 8px;
-            
-            .thumbnail-item {
-              width: 60px;
-              height: 60px;
-              border: 2px solid #e4e7ed;
-              border-radius: 4px;
-              cursor: pointer;
+            .main-image {
+              margin-bottom: 12px;
+              border: 1px solid #e4e7ed;
+              border-radius: 8px;
               overflow: hidden;
-              transition: border-color 0.3s;
-              position: relative;
               
-              &.active {
-                border-color: #409eff;
-              }
-              
-              &.is-primary {
-                border-color: #f56c6c;
-                
-                &.active {
-                  border-color: #f56c6c;
-                  box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.2);
-                }
-              }
-              
-              &:hover {
-                border-color: #409eff;
-              }
-              
-              .primary-badge {
-                position: absolute;
-                top: 2px;
-                right: 2px;
-                background: #f56c6c;
-                color: #fff;
-                border-radius: 50%;
-                width: 16px;
-                height: 16px;
+              .main-product-image {
+                width: 100%;
+                height: 300px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 10px;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+                background: #f5f7fa;
+                
+                .image-error {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  color: #909399;
+                  
+                  i {
+                    font-size: 48px;
+                    margin-bottom: 8px;
+                  }
+                }
+              }
+            }
+            
+            .thumbnail-list {
+              display: flex;
+              gap: 8px;
+              
+              .thumbnail-item {
+                width: 60px;
+                height: 60px;
+                border: 2px solid #e4e7ed;
+                border-radius: 4px;
+                cursor: pointer;
+                overflow: hidden;
+                transition: border-color 0.3s;
+                position: relative;
+                
+                &.active {
+                  border-color: #409eff;
+                }
+                
+                &.is-primary {
+                  border-color: #f56c6c;
+                  
+                  &.active {
+                    border-color: #f56c6c;
+                    box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.2);
+                  }
+                }
+                
+                &:hover {
+                  border-color: #409eff;
+                }
+                
+                .primary-badge {
+                  position: absolute;
+                  top: 2px;
+                  right: 2px;
+                  background: #f56c6c;
+                  color: #fff;
+                  border-radius: 50%;
+                  width: 16px;
+                  height: 16px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 10px;
+                  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+                }
+                
+                .el-image {
+                  width: 100%;
+                  height: 100%;
+                }
+              }
+            }
+            
+            .image-upload-section {
+              margin-top: 20px;
+              padding: 16px;
+              background: #f8f9fa;
+              border-radius: 8px;
+              
+              .el-form-item {
+                margin-bottom: 12px;
+                
+                &:last-child {
+                  margin-bottom: 0;
+                }
+                
+                .el-form-item__label {
+                  font-weight: 500;
+                  color: #606266;
+                }
               }
               
-              .el-image {
+              .el-button {
                 width: 100%;
-                height: 100%;
               }
             }
           }
-        }
       }
       
       .product-right {
